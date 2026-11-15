@@ -1,0 +1,6 @@
+{
+  "name": "Voice Guardian AI",
+  "description": "Mobile-first personal AI voice assistant with Gemini conversations, voice guardian, website builder, deep research, image creator, live forex watchlist, screen guardian, and AI whiteboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

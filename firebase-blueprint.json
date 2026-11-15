@@ -1,0 +1,155 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Jarvis user profile, voice settings, language preference, and privacy controls",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "preferredLanguage": { "type": "string", "enum": ["en", "bn", "ar"] },
+        "speechRate": { "type": "number", "description": "TTS speech rate from 0.5 to 2.0" },
+        "voiceResponseEnabled": { "type": "boolean" },
+        "confirmSensitiveActions": { "type": "boolean" },
+        "memoryOptIn": { "type": "boolean" },
+        "wakePhraseEnabled": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "userId",
+        "displayName",
+        "preferredLanguage",
+        "speechRate",
+        "voiceResponseEnabled",
+        "confirmSensitiveActions",
+        "memoryOptIn",
+        "wakePhraseEnabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ConversationMessage": {
+      "title": "ConversationMessage",
+      "description": "AI conversation message across chat, voice, screen, research, or whiteboard",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "sessionId": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string" },
+        "language": { "type": "string", "enum": ["en", "bn", "ar"] },
+        "source": { "type": "string", "enum": ["voice", "chat", "screen", "research", "whiteboard"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "sessionId", "role", "content", "language", "source", "createdAt"]
+    },
+    "VoiceCommandEntry": {
+      "title": "VoiceCommandEntry",
+      "description": "Spoken command history log entry",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "transcript": { "type": "string" },
+        "responseSummary": { "type": "string" },
+        "language": { "type": "string", "enum": ["en", "bn", "ar"] },
+        "wakeTriggered": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "transcript", "responseSummary", "language", "wakeTriggered", "createdAt"]
+    },
+    "StudioProject": {
+      "title": "StudioProject",
+      "description": "AI website/app builder generated project with HTML, CSS, JS code",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "prompt": { "type": "string" },
+        "framework": { "type": "string", "enum": ["html_css_js", "react_cdn"] },
+        "htmlCode": { "type": "string" },
+        "cssCode": { "type": "string" },
+        "jsCode": { "type": "string" },
+        "lastDiagnostic": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "prompt", "framework", "htmlCode", "cssCode", "jsCode", "lastDiagnostic", "createdAt", "updatedAt"]
+    },
+    "ResearchBrief": {
+      "title": "ResearchBrief",
+      "description": "Verified deep research summary with real source URLs and titles",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "query": { "type": "string" },
+        "summary": { "type": "string" },
+        "verificationNotes": { "type": "string" },
+        "sourceTitles": { "type": "array" },
+        "sourceUrls": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "query", "summary", "verificationNotes", "sourceTitles", "sourceUrls", "createdAt"]
+    },
+    "ForexWatchItem": {
+      "title": "ForexWatchItem",
+      "description": "Custom forex watchlist currency pair with optional price alert",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "baseCurrency": { "type": "string" },
+        "quoteCurrency": { "type": "string" },
+        "targetAlertRate": { "type": "number" },
+        "alertDirection": { "type": "string", "enum": ["above", "below", "none"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "baseCurrency", "quoteCurrency", "targetAlertRate", "alertDirection", "createdAt", "updatedAt"]
+    },
+    "UserMemoryItem": {
+      "title": "UserMemoryItem",
+      "description": "User-approved personalized memory, preference, or shortcut",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string", "enum": ["preference", "shortcut", "command"] },
+        "approved": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "content", "category", "approved", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Authenticated user profile and settings"
+    },
+    "/users/{userId}/conversations/{messageId}": {
+      "schema": { "$ref": "#/entities/ConversationMessage" },
+      "description": "User conversation message history"
+    },
+    "/users/{userId}/voice_commands/{commandId}": {
+      "schema": { "$ref": "#/entities/VoiceCommandEntry" },
+      "description": "Voice command transcripts and assistant summaries"
+    },
+    "/users/{userId}/studio_projects/{projectId}": {
+      "schema": { "$ref": "#/entities/StudioProject" },
+      "description": "AI Studio generated web projects"
+    },
+    "/users/{userId}/research_briefs/{briefId}": {
+      "schema": { "$ref": "#/entities/ResearchBrief" },
+      "description": "Saved deep research briefs with verified source links"
+    },
+    "/users/{userId}/forex_watchlist/{pairId}": {
+      "schema": { "$ref": "#/entities/ForexWatchItem" },
+      "description": "Custom forex watchlist pairs and alert thresholds"
+    },
+    "/users/{userId}/memories/{memoryId}": {
+      "schema": { "$ref": "#/entities/UserMemoryItem" },
+      "description": "User-approved personalized memories and shortcuts"
+    }
+  }
+}

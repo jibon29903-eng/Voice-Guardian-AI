@@ -1,0 +1,19 @@
+{
+  "packageName": "com.voiceguardian.jarvis",
+  "latestVersionName": "1.0.0",
+  "latestVersionCode": 1,
+  "minSdk": 24,
+  "apkUrl": "https://github.com/jibon29903-eng/Jerves-apk/releases/download/v1.0.0/VoiceGuardianAI-v1.0.0-debug.apk",
+  "sha256": "",
+  "releaseDate": "2026-11-14",
+  "releaseNotes": "Initial Voice Guardian AI release: Gemini 3.8 Flash assistant, multilingual Voice Guardian (English/Bangla/Arabic), AI Website Studio, Deep Research, Image Creator, Live Forex Watchlist, Screen Guardian, AI Whiteboard, Network Guardian, and SHA-256 verified APK Version Management.",
+  "mandatory": false,
+  "history": [
+    {
+      "versionName": "1.0.0",
+      "versionCode": 1,
+      "releaseDate": "2026-11-14",
+      "notes": "Initial Voice Guardian AI release with SHA-256 verified APK version management."
+    }
+  ]
+}
