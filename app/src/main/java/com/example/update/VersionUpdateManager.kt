@@ -441,7 +441,7 @@ class VersionUpdateManager(
 
     companion object {
         const val DEFAULT_MANIFEST_URL =
-            "https://github.com/jibon29903-eng/Jerves-apk/releases/latest/download/version.json"
+            "https://github.com/jibon29903-eng/Voice-Guardian-AI/releases/latest/download/version.json"
         private val SHA256_REGEX = Regex("^[0-9a-f]{64}$")
         private const val UPDATE_CHANNEL_ID = "voice_guardian_updates"
         private const val UPDATE_NOTIFICATION_ID = 4102

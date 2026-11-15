@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,25 +27,46 @@ jobs:
             base64 -d debug.keystore.base64 > debug.keystore
           fi
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Set up Android SDK & Licenses
         uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK Licenses & Pre-install SDK 36
+        run: |
+          if [ -n "${ANDROID_HOME:-}" ] && [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null 2>&1 || true
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "platforms;android-36.1" "build-tools;36.0.0" || true
+          fi
 
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
 
-      - name: Build Debug APK & AAB
-        run: gradle :app:assembleDebug :app:bundleDebug --no-daemon
+      - name: Build Debug APK
+        run: gradle :app:assembleDebug --no-daemon
 
-      - name: Build Signed Release APK & AAB (if keystore secret is configured)
-        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+      - name: Upload app-debug.apk Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Build Debug AAB
+        run: gradle :app:bundleDebug --no-daemon
+
+      - name: Verify Release R8 Shrinking
+        continue-on-error: true
+        run: gradle :app:minifyReleaseWithR8 --no-daemon
+
+      - name: Build Signed Release APK & AAB (when keystore secrets are configured)
+        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' && secrets.STORE_PASSWORD != '' && secrets.KEY_PASSWORD != '' }}
         env:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -49,11 +74,13 @@ jobs:
           echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > my-upload-key.jks
           KEYSTORE_PATH="$PWD/my-upload-key.jks" gradle :app:assembleRelease :app:bundleRelease --no-daemon
 
-      - name: Prepare Release Assets & SHA-256 Checksum
+      - name: Prepare Full Package & SHA-256 Checksum
         run: |
           mkdir -p dist
           cp app/build/outputs/apk/debug/app-debug.apk dist/VoiceGuardianAI-v1.0.0-debug.apk
-          cp app/build/outputs/bundle/debug/app-debug.aab dist/VoiceGuardianAI-v1.0.0-debug.aab
+          if [ -f app/build/outputs/bundle/debug/app-debug.aab ]; then
+            cp app/build/outputs/bundle/debug/app-debug.aab dist/VoiceGuardianAI-v1.0.0-debug.aab
+          fi
           PRIMARY_APK="dist/VoiceGuardianAI-v1.0.0-debug.apk"
           APK_FILENAME="VoiceGuardianAI-v1.0.0-debug.apk"
           if [ -f app/build/outputs/apk/release/app-release.apk ]; then
@@ -66,19 +93,23 @@ jobs:
           fi
           APK_SHA256=$(sha256sum "$PRIMARY_APK" | awk '{print $1}')
           TAG_NAME="${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.0.0' }}"
-          sed -e "s/\"sha256\": \"\"/\"sha256\": \"$APK_SHA256\"/" \
-              -e "s|VoiceGuardianAI-v1.0.0-debug.apk|$APK_FILENAME|g" \
-              -e "s|/releases/download/v1.0.0/|/releases/download/$TAG_NAME/|g" \
-              version.json > dist/version.json
+          if [ -f version.json ]; then
+            sed -e "s/\"sha256\": \"\"/\"sha256\": \"$APK_SHA256\"/" \
+                -e "s|VoiceGuardianAI-v1.0.0-debug.apk|$APK_FILENAME|g" \
+                -e "s|/releases/download/v1.0.0/|/releases/download/$TAG_NAME/|g" \
+                version.json > dist/version.json
+          fi
           sha256sum dist/*.apk dist/*.aab > dist/checksums.sha256.txt
 
-      - name: Upload Build Artifacts
+      - name: Upload All Build Artifacts (APK, AAB, Checksums)
         uses: actions/upload-artifact@v4
         with:
           name: voice-guardian-ai-builds
           path: dist/*
+          if-no-files-found: error
 
-      - name: Publish GitHub Release with Direct Download Links
+      - name: Publish GitHub Release (requires contents write permission)
+        continue-on-error: true
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v1.0.0' }}
